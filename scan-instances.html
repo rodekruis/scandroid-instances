@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>121 Scan instances</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M3.5 0h3v3.5H10v3H6.5V10h-3V6.5H0v-3h3.5z' fill='%23E30613'/></svg>">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #333333;
+    --muted: #888888;
+    --rule: #e2e2e2;
+    --label: #666666;
+    --label-dark: #555555;
+    --link-bg: #c2e3eb;
+    --link-ink: #4a6670;
+    --up: #6cc644;
+    --down: #e05d44;
+    --pending: #b0b0b0;
+    --main: #8a8a8a;
+    --testing: #dfb317;
+    color-scheme: light;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1d21;
+      --ink: #d6d6d6;
+      --muted: #8d8d8d;
+      --rule: #34373d;
+      --label: #4a4d53;
+      --label-dark: #3c3f45;
+      --link-bg: #2f4a52;
+      --link-ink: #c2e3eb;
+      color-scheme: dark;
+    }
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: Verdana, Geneva, "DejaVu Sans", sans-serif; font-size: 13px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 18px 16px 48px; }
+
+  .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px dashed #bbb; }
+  .top h1 { font-size: 13px; font-weight: bold; margin: 0; display: flex; align-items: center; gap: 6px; }
+  .top .meta { color: var(--muted); font-size: 12px; }
+  .top .spacer { flex: 1; }
+  button.recheck {
+    font: inherit; font-size: 11px; border: 0; border-radius: 3px; cursor: pointer;
+    background: var(--label-dark); color: #fff; padding: 3px 8px;
+  }
+  button.recheck:disabled { opacity: .5; cursor: progress; }
+  :focus-visible { outline: 2px solid #4a90d9; outline-offset: 1px; }
+
+  ul { list-style: none; margin: 18px 0 0; padding: 0; }
+  li {
+    display: grid; grid-template-columns: 200px 1fr auto; align-items: center; gap: 8px 16px;
+    padding: 12px 8px; border-bottom: 1px solid var(--rule);
+  }
+  .name { display: flex; align-items: center; gap: 9px; font-family: "Courier New", Consolas, monospace; font-size: 15px; }
+  .name svg { width: 16px; height: 11px; flex: none; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+  .name small { display: block; font-family: Verdana, Geneva, sans-serif; font-size: 10px; color: var(--muted); }
+
+  /* shields-style badges: label segment + value segment, butted together */
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+  .badge { display: inline-flex; font-size: 12px; line-height: 20px; border-radius: 3px; overflow: hidden; white-space: nowrap; text-decoration: none; }
+  .badge > span { padding: 0 6px; }
+  .badge .l { background: var(--label); color: #fff; }
+  .badge .v { background: var(--link-bg); color: var(--link-ink); }
+  a.badge:hover .v { text-decoration: underline; }
+  .badge .up { background: var(--up); color: #fff; }
+  .badge .down { background: var(--down); color: #fff; }
+  .badge .pending { background: var(--pending); color: #fff; }
+  .badge .main { background: var(--main); color: #fff; }
+  .badge .testing { background: var(--testing); color: #333; }
+  .badge .unset { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--rule); }
+  .badge .l.unset { background: var(--label); opacity: .55; }
+  .checking .up, .checking .pending { animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .4; } }
+  @media (prefers-reduced-motion: reduce) { .checking .pending { animation: none; } }
+
+  .build { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .note { grid-column: 2 / -1; font-size: 11px; color: var(--muted); margin-top: -4px; }
+
+  @media (max-width: 760px) {
+    li { grid-template-columns: 1fr; }
+    .build { justify-content: flex-start; }
+    .note { grid-column: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1><svg width="12" height="12" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 0h3v3.5H10v3H6.5V10h-3V6.5H0v-3h3.5z" fill="#e30613"/></svg>121 Scan instances</h1>
+    <span class="meta" id="summary" aria-live="polite">checking…</span>
+    <span class="spacer"></span>
+    <span class="meta" id="checked"></span>
+    <button class="recheck" id="refresh" type="button">Check again</button>
+  </div>
+  <ul id="list"></ul>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+ * Instance list — edit this.
+ *
+ * name           Shown in the row.
+ * flag           Key into FLAGS below.
+ * appName        Azure Web App name (the deploy workflow's app-name).
+ * url            Public URL of the 121 Scan instance.
+ * url121         The 121 instance it connects to (its URL_121 setting).
+ * subscriptionId Azure subscription ID  } both needed for the Azure link
+ * resourceGroup  Azure resource group   }
+ * branch         The branch this instance is built from.
+ *
+ * Empty strings show as "not set"; nothing is guessed.
+ * ------------------------------------------------------------------------- */
+const REPO_URL = "https://github.com/rodekruis/scandroid";
+
+const INSTANCES = [
+  { name: "Demo",       flag: "demo",       appName: "scandroid-demo",       url: "https://scan.demo.121.global/", url121: "https://portal.demo.121.global/", subscriptionId: "e5a80ab6-326f-4d9e-8191-35c9cc898cdc", resourceGroup: "scandroid-app_group", branch: "testing" },
+  { name: "Cameroon",   flag: "cameroon",   appName: "scandroid-cameroon",   url: "https://scan.cameroon.121.global/", url121: "https://portal.cameroon.121.global/", subscriptionId: "e5a80ab6-326f-4d9e-8191-35c9cc898cdc", resourceGroup: "scandroid-app_group", branch: "main" },
+  { name: "Chad",       flag: "chad",       appName: "scandroid-app",        url: "https://scandroid.121.global/", url121: "https://portal.chad.121.global/", subscriptionId: "e5a80ab6-326f-4d9e-8191-35c9cc898cdc", resourceGroup: "scandroid-app_group", branch: "main" },
+  { name: "Mauritania", flag: "mauritania", appName: "scandroid-mauritania", url: "https://scandroid.mauritania.121.global/", url121: "https://portal.mauritania.121.global/", subscriptionId: "e5a80ab6-326f-4d9e-8191-35c9cc898cdc", resourceGroup: "scandroid-app_group", branch: "main" },
+  { name: "Nigeria",    flag: "nigeria",    appName: "scandroid-nigeria",    url: "https://scan.nigeria.121.global/", url121: "https://portal.nigeria.121.global/", subscriptionId: "e5a80ab6-326f-4d9e-8191-35c9cc898cdc", resourceGroup: "scandroid-app_group", branch: "main" },
+  { name: "Sudan",      flag: "sudan",      appName: "scandroid-sudan",      url: "https://scan.sudan.121.global/", url121: "https://portal.sudan.121.global/", subscriptionId: "e5a80ab6-326f-4d9e-8191-35c9cc898cdc", resourceGroup: "scandroid-app_group", branch: "main" },
+];
+
+/* Simplified 16×11 flags, inline so they render on every OS (Windows does
+ * not draw flag emoji). */
+const FLAGS = {
+  demo:       '<rect width="16" height="11" fill="#fff"/><path d="M6.5 1.5h3v2.5H12v3H9.5v2.5h-3V7H4V4h2.5z" fill="#e30613"/>',
+  chad:       '<rect width="16" height="11" fill="#c60c30"/><rect width="10.67" height="11" fill="#fecb00"/><rect width="5.33" height="11" fill="#002664"/>',
+  nigeria:    '<rect width="16" height="11" fill="#008751"/><rect x="5.33" width="5.34" height="11" fill="#fff"/>',
+  cameroon:   '<rect width="16" height="11" fill="#fcd116"/><rect width="10.67" height="11" fill="#ce1126"/><rect width="5.33" height="11" fill="#007a5e"/><path d="M8 3.6l.55 1.7h1.8l-1.45 1.05.55 1.7L8 7l-1.45 1.05.55-1.7-1.45-1.05h1.8z" fill="#fcd116"/>',
+  mauritania: '<rect width="16" height="11" fill="#d01c1f"/><rect y="1.6" width="16" height="7.8" fill="#00a95c"/><path d="M5.6 4.6a2.4 2.4 0 0 0 4.8 0a2.6 2.1 0 0 1-4.8 0z" fill="#ffd700"/><circle cx="8" cy="3.6" r=".7" fill="#ffd700"/>',
+  sudan:      '<rect width="16" height="11" fill="#000"/><rect width="16" height="7.33" fill="#fff"/><rect width="16" height="3.67" fill="#d21034"/><path d="M0 0l5.5 5.5L0 11z" fill="#007229"/>',
+};
+
+const TIMEOUT_MS = 8000;
+
+/* ------------------------------------------------------------------------- */
+
+const listEl = document.getElementById("list");
+const summaryEl = document.getElementById("summary");
+const checkedEl = document.getElementById("checked");
+const refreshBtn = document.getElementById("refresh");
+
+function el(tag, attrs = {}, children = []) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else n.setAttribute(k, v);
+  }
+  for (const c of [].concat(children)) {
+    if (c == null || c === false) continue;
+    n.append(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  return n;
+}
+
+/* badge(label, value, valueClass, href, title) */
+function badge(label, value, cls = "", href = null, title = null) {
+  const parts = [el("span", { class: "l" + (cls === "unset" ? " unset" : ""), text: label })];
+  if (value != null) parts.push(el("span", { class: cls ? cls : "v", text: value }));
+  const attrs = { class: "badge" };
+  if (title) attrs.title = title;
+  if (href) Object.assign(attrs, { href, target: "_blank", rel: "noopener noreferrer" });
+  return el(href ? "a" : "span", attrs, parts);
+}
+
+const base = u => u.replace(/\/+$/, "");
+
+function azureUrl(i) {
+  if (!i.subscriptionId || !i.resourceGroup) return null;
+  return "https://portal.azure.com/#resource/subscriptions/" + encodeURIComponent(i.subscriptionId) +
+    "/resourceGroups/" + encodeURIComponent(i.resourceGroup) +
+    "/providers/Microsoft.Web/sites/" + encodeURIComponent(i.appName) + "/overview";
+}
+
+async function fetchWithTimeout(url, opts = {}) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try { return await fetch(url, { ...opts, cache: "no-store", signal: ctrl.signal }); }
+  finally { clearTimeout(t); }
+}
+
+/* up: the instance answered /ping · down: no answer · unknown: no URL.
+ * no-cors can't read the reply, but the request only resolves if the server
+ * answered, which is all "up" needs. */
+async function check(inst) {
+  if (!inst.url) return { state: "unknown", note: "No URL in the instance list." };
+  try {
+    await fetchWithTimeout(base(inst.url) + "/ping", { mode: "no-cors" });
+    return { state: "up" };
+  } catch (_) {
+    return { state: "down", note: "No response within " + TIMEOUT_MS / 1000 + " s." };
+  }
+}
+
+const STATUS = {
+  checking: ["…", "pending"],
+  up:       ["up", "up"],
+  down:     ["down", "down"],
+  unknown:  ["?", "pending"],
+};
+
+function row(inst, r) {
+  const [statusText, statusCls] = STATUS[r.state];
+
+  const name = el("div", { class: "name" });
+  name.insertAdjacentHTML("beforeend",
+    `<svg viewBox="0 0 16 11" aria-hidden="true">${FLAGS[inst.flag] || ""}</svg>`);
+  name.append(el("div", {}, [inst.name, el("small", { text: inst.appName })]));
+
+  const az = azureUrl(inst);
+  const links = el("div", { class: "badges" }, [
+    inst.url ? badge("121 Scan", statusText, statusCls, base(inst.url)) : badge("121 Scan", "not set", "unset"),
+    az ? badge("Azure", "App Service", "", az) : badge("Azure", "not set", "unset"),
+    inst.url121 ? badge("121", "Portal", "", base(inst.url121)) : badge("121", "not set", "unset"),
+  ]);
+
+  const build = el("div", { class: "build" });
+  if (inst.branch) {
+    const bcls = inst.branch === "main" ? "main" : inst.branch === "testing" ? "testing" : "v";
+    build.append(badge("branch", inst.branch, bcls, REPO_URL + "/tree/" + encodeURIComponent(inst.branch)));
+  } else {
+    build.append(badge("branch", "not set", "unset"));
+  }
+
+  const notes = r.note ? [el("div", { class: "note", text: r.note })] : [];
+
+  return el("li", { class: r.state }, [name, links, build, ...notes]);
+}
+
+async function run() {
+  refreshBtn.disabled = true;
+  summaryEl.textContent = "checking…";
+  listEl.replaceChildren(...INSTANCES.map(i => row(i, { state: "checking" })));
+
+  const states = await Promise.all(INSTANCES.map(async (inst, i) => {
+    const r = await check(inst);
+    listEl.replaceChild(row(inst, r), listEl.children[i]);
+    return r.state;
+  }));
+
+  const n = s => states.filter(x => x === s).length;
+  const parts = [n("up") + "/" + INSTANCES.length + " up"];
+  if (n("down")) parts.push(n("down") + " down");
+  if (n("unknown")) parts.push(n("unknown") + " without URL");
+  summaryEl.textContent = parts.join(", ");
+  checkedEl.textContent = "checked " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  refreshBtn.disabled = false;
+}
+
+refreshBtn.addEventListener("click", run);
+run();
+</script>
+</body>
+</html>

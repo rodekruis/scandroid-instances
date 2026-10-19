@@ -153,6 +153,25 @@
   .branch svg { width: 13px; height: 13px; }
   .rg { font-size: 12px; color: var(--muted); }
 
+  /* branch differences */
+  .group-head .diff-link { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--accent); }
+  .group-head .diff-link svg { width: 13px; height: 13px; }
+  .diff-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 4px 20px; }
+  .diff-block { padding: 16px 0; }
+  .diff-block + .diff-block { border-top: 1px solid var(--line); }
+  .diff-block h3 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+  .diff-block h3 span { font-weight: 500; color: var(--muted); }
+  .commits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .commit { display: flex; align-items: baseline; gap: 12px; }
+  .commit::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; transform: translateY(-2px); }
+  .commit .sha { font-family: var(--mono); font-size: 12px; color: var(--accent); flex: none; }
+  .commit-body { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .commit .msg { overflow-wrap: anywhere; }
+  .commit .meta { font-size: 12px; color: var(--muted); }
+  .diff-more { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+  .diff-empty { margin: 0; padding: 16px 0; color: var(--muted); }
+  #diff .note { margin: 0; }
+
   footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
   footer a { color: var(--accent); }
   footer .repo { display: inline-flex; align-items: center; gap: 6px; }
@@ -185,6 +204,8 @@
   </section>
 
   <div id="groups"></div>
+
+  <section class="group" id="diff" aria-live="polite"></section>
 
   <footer>
     <span>If you need support contact <a href="mailto:jharrison@redcross.nl">jharrison@redcross.nl</a></span>
@@ -232,6 +253,11 @@ const FLAGS = {
   mauritania: '<rect width="16" height="11" fill="#d01c1f"/><rect y="1.6" width="16" height="7.8" fill="#00a95c"/><path d="M5.6 4.6a2.4 2.4 0 0 0 4.8 0a2.6 2.1 0 0 1-4.8 0z" fill="#ffd700"/><circle cx="8" cy="3.6" r=".7" fill="#ffd700"/>',
   sudan:      '<rect width="16" height="11" fill="#000"/><rect width="16" height="7.33" fill="#fff"/><rect width="16" height="3.67" fill="#d21034"/><path d="M0 0l5.5 5.5L0 11z" fill="#007229"/>',
 };
+
+/* Branch comparison shown under the instances: commits in `head` that are
+ * not yet in `base`, and the other way round. Uses the public GitHub API
+ * (no token, 60 requests per hour per visitor; each check uses 1–2). */
+const COMPARE = { base: "main", head: "testing" };
 
 const TIMEOUT_MS = 8000;
 
@@ -413,12 +439,109 @@ function renderSummary(states, done) {
   }
 }
 
+/* ---- Branch differences ------------------------------------------------ */
+
+const diffEl = document.getElementById("diff");
+const REPO_API = "https://api.github.com/repos/" + REPO_URL.replace(/^https:\/\/github\.com\//, "");
+const plural = (n, word) => n + " " + word + (n === 1 ? "" : "s");
+
+const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+function ago(iso) {
+  const s = (new Date(iso) - Date.now()) / 1000;
+  const units = [["year", 31536000], ["month", 2592000], ["week", 604800], ["day", 86400], ["hour", 3600], ["minute", 60]];
+  for (const [u, n] of units) if (Math.abs(s) >= n) return rtf.format(Math.round(s / n), u);
+  return "just now";
+}
+
+async function compareBranches(base, head) {
+  const r = await fetchWithTimeout(REPO_API + "/compare/" + base + "..." + head,
+    { headers: { Accept: "application/vnd.github+json" } });
+  if (r.ok) return r.json();
+  if ((r.status === 403 || r.status === 429) && r.headers.get("x-ratelimit-remaining") === "0") {
+    const reset = Number(r.headers.get("x-ratelimit-reset")) * 1000;
+    const at = reset ? new Date(reset).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "later";
+    throw new Error("GitHub’s hourly request limit is used up for this network. Check again after " + at + ".");
+  }
+  if (r.status === 404) throw new Error("GitHub can’t find " + base + " or " + head + " in this repository, or the repository is private.");
+  throw new Error("GitHub answered with status " + r.status + ". Check again in a moment.");
+}
+
+function commitItem(c) {
+  const msg = (c.commit.message || "").split("\n")[0];
+  const who = (c.author && c.author.login) || (c.commit.author && c.commit.author.name) || "unknown";
+  const when = c.commit.author && c.commit.author.date;
+  return el("li", { class: "commit" }, [
+    el("a", { class: "sha", href: c.html_url, ...ext, text: c.sha.slice(0, 7) }),
+    el("div", { class: "commit-body" }, [
+      el("span", { class: "msg", text: msg }),
+      el("span", { class: "meta", title: when ? new Date(when).toLocaleString() : null,
+        text: who + (when ? ", " + ago(when) : "") }),
+    ]),
+  ]);
+}
+
+function commitBlock(title, commits, total) {
+  const shown = commits.slice().reverse(); // newest first
+  return el("div", { class: "diff-block" }, [
+    el("h3", {}, [title + " ", el("span", { text: "(" + total + ")" })]),
+    el("ul", { class: "commits" }, shown.map(commitItem)),
+    total > commits.length
+      ? el("p", { class: "diff-more", text: "Showing " + commits.length + " of " + total + ". Open the comparison on GitHub for the rest." })
+      : null,
+  ]);
+}
+
+function renderDiff(s) {
+  const { base, head } = COMPARE;
+  const headBits = [el("h2", { text: "Branch differences" })];
+  let body = null;
+
+  if (s.loading) {
+    headBits.push(el("span", { text: "Loading commits from GitHub…" }));
+  } else if (s.error) {
+    headBits.push(el("span", { text: head + " compared with " + base }));
+    body = el("p", { class: "note", text: s.error });
+  } else {
+    const a = s.result;
+    const parts = [];
+    if (a.ahead_by) parts.push(base + " is " + plural(a.ahead_by, "commit") + " behind " + head);
+    if (a.behind_by) parts.push(head + " is " + plural(a.behind_by, "commit") + " behind " + base);
+    headBits.push(el("span", { text: parts.length ? parts.join("; ") : base + " and " + head + " are identical" }));
+    headBits.push(el("a", { class: "diff-link", href: a.html_url, ...ext }, ["Compare on GitHub", icon("external")]));
+
+    const blocks = [];
+    if (a.ahead_by) blocks.push(commitBlock("In " + head + ", not yet in " + base, a.commits, a.ahead_by));
+    if (a.behind_by) blocks.push(commitBlock("In " + base + ", not in " + head, s.behind, a.behind_by));
+    body = el("div", { class: "diff-panel" },
+      blocks.length ? blocks : [el("p", { class: "diff-empty", text: "Nothing to merge either way." })]);
+  }
+
+  diffEl.replaceChildren(el("div", { class: "group-head" }, headBits), body);
+}
+
+async function loadDiff() {
+  renderDiff({ loading: true });
+  try {
+    const result = await compareBranches(COMPARE.base, COMPARE.head);
+    const behind = result.behind_by ? (await compareBranches(COMPARE.head, COMPARE.base)).commits : [];
+    renderDiff({ result, behind });
+  } catch (e) {
+    const msg = e.name === "AbortError" ? "GitHub didn’t answer within " + TIMEOUT_MS / 1000 + " s. Check again in a moment."
+      : e instanceof TypeError ? "Couldn’t reach GitHub from this network."
+      : e.message;
+    renderDiff({ error: msg });
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+
 async function run() {
   refreshBtn.disabled = true;
   checkedEl.textContent = "Checking…";
   const states = INSTANCES.map(() => "checking");
   renderAll(states);
   renderSummary(states, false);
+  const diffDone = loadDiff();
 
   await Promise.all(INSTANCES.map(async (inst, i) => {
     const r = await check(inst);
@@ -430,6 +553,7 @@ async function run() {
   }));
 
   renderSummary(states, true);
+  await diffDone;
   checkedEl.textContent = "Checked " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   refreshBtn.disabled = false;
 }

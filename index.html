@@ -4,119 +4,213 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>121 Scan instances</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><path d='M3.5 0h3v3.5H10v3H6.5V10h-3V6.5H0v-3h3.5z' fill='%23E30613'/></svg>">
+<link rel="icon" type="image/png" href="/static/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
   :root {
-    --bg: #ffffff;
-    --ink: #333333;
-    --muted: #888888;
-    --rule: #e2e2e2;
-    --label: #666666;
-    --label-dark: #555555;
-    --link-bg: #c2e3eb;
-    --link-ink: #4a6670;
-    --up: #6cc644;
-    --down: #e05d44;
-    --pending: #b0b0b0;
-    --main: #8a8a8a;
-    --testing: #dfb317;
+    --bg: #F5F4F9;
+    --surface: #FFFFFF;
+    --ink: #1D1833;
+    --muted: #5D5774;
+    --line: #E3E0EE;
+    --band: #231B4B;
+    --band-muted: #CFC9EE;
+    --accent: #5A45C2;
+    --on-accent: #FFFFFF;
+    --btn-bg: #EFEDF8;
+    --btn-ink: #3A2E7A;
+    --up-bg: #E3F4EF;
+    --up-ink: #136B5C;
+    --down-bg: #FDEBDD;
+    --down-ink: #A23A06;
+    --down-line: #F0B38C;
+    --wait-bg: #ECEAF2;
+    --wait-ink: #5D5774;
+    --test-bg: #FDF3D8;
+    --test-ink: #7A5600;
+    --main-bg: #ECEAF5;
+    --main-ink: #3E3866;
+    --sans: "IBM Plex Sans", "Segoe UI", Helvetica, sans-serif;
+    --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
     color-scheme: light;
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--band);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1b1d21;
-      --ink: #d6d6d6;
-      --muted: #8d8d8d;
-      --rule: #34373d;
-      --label: #4a4d53;
-      --label-dark: #3c3f45;
-      --link-bg: #2f4a52;
-      --link-ink: #c2e3eb;
+      --bg: #121022;
+      --surface: #1C1931;
+      --ink: #ECEAF6;
+      --muted: #A9A4C2;
+      --line: #2E2A4A;
+      --band: #0B0918;
+      --accent: #A898F2;
+      --on-accent: #161226;
+      --btn-bg: #2A2548;
+      --btn-ink: #DCD6FF;
+      --up-bg: #123A33;
+      --up-ink: #7FDCC6;
+      --down-bg: #43200C;
+      --down-ink: #FFB38A;
+      --down-line: #8A4A22;
+      --wait-bg: #26223F;
+      --wait-ink: #A9A4C2;
+      --test-bg: #3A2E0A;
+      --test-ink: #F2CF6B;
+      --main-bg: #2A2645;
+      --main-ink: #CFCAEE;
       color-scheme: dark;
     }
   }
   *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; }
   body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font-family: Verdana, Geneva, "DejaVu Sans", sans-serif; font-size: 13px;
+    background: var(--bg); color: var(--ink); min-height: 100vh;
+    font-family: var(--sans); font-size: 14px; line-height: 1.45;
   }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 18px 16px 48px; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  svg.i { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px dashed #bbb; }
-  .top h1 { font-size: 13px; font-weight: bold; margin: 0; display: flex; align-items: center; gap: 6px; }
-  .top .meta { color: var(--muted); font-size: 12px; }
-  .top .spacer { flex: 1; }
-  button.recheck {
-    font: inherit; font-size: 11px; border: 0; border-radius: 3px; cursor: pointer;
-    background: var(--label-dark); color: #fff; padding: 3px 8px;
+  /* header */
+  header { background: var(--band); color: #fff; }
+  .head { max-width: 1160px; margin: 0 auto; padding: 28px 24px 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+  .head img { width: 64px; height: 64px; border-radius: 50%; flex: none; }
+  .head .title { flex: 1 1 240px; display: flex; flex-direction: column; gap: 2px; }
+  .head h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+  .head p { margin: 0; color: var(--band-muted); }
+  .head .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .head .checked { font-size: 13px; color: var(--band-muted); }
+  .recheck {
+    display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px;
+    border: 0; border-radius: 10px; background: #fff; color: #231B4B;
+    font: 600 14px var(--sans); cursor: pointer;
   }
-  button.recheck:disabled { opacity: .5; cursor: progress; }
-  :focus-visible { outline: 2px solid #4a90d9; outline-offset: 1px; }
+  .recheck svg { width: 16px; height: 16px; }
+  .recheck:disabled { opacity: .6; cursor: progress; }
+  .recheck:disabled svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  ul { list-style: none; margin: 18px 0 0; padding: 0; }
-  li {
-    display: grid; grid-template-columns: 200px 1fr auto; align-items: center; gap: 8px 16px;
-    padding: 12px 8px; border-bottom: 1px solid var(--rule);
+  /* main */
+  main { max-width: 1160px; margin: 0 auto; padding: 28px 24px 56px; display: flex; flex-direction: column; gap: 32px; }
+
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .stat .k { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .stat .v { font-size: 30px; font-weight: 700; }
+  .stat .v small { font-size: 16px; font-weight: 500; color: var(--muted); }
+  .stat .v.up { color: var(--up-ink); }
+  .stat .v.down { color: var(--down-ink); }
+  .stat .v.none { color: var(--muted); }
+  .stat .txt { font-size: 14px; }
+  code { font-family: var(--mono); font-size: 13px; }
+
+  section.group { display: flex; flex-direction: column; gap: 14px; }
+  .group-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+  .group-head h2 { margin: 0; font-size: 17px; font-weight: 600; }
+  .group-head span { font-size: 13px; color: var(--muted); }
+
+  .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+  @media (max-width: 400px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .card.down { border-color: var(--down-line); }
+
+  .card-top { display: flex; align-items: flex-start; gap: 12px; }
+  .flag { width: 30px; height: 21px; flex: none; margin-top: 3px; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+  .who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .who h3 { margin: 0; font-size: 18px; font-weight: 600; }
+  .who span { font-family: var(--mono); font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .pill.up { background: var(--up-bg); color: var(--up-ink); }
+  .pill.down { background: var(--down-bg); color: var(--down-ink); }
+  .pill.checking, .pill.unknown { background: var(--wait-bg); color: var(--wait-ink); }
+  .pill.checking::before { animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .3; } }
+  @media (prefers-reduced-motion: reduce) {
+    .pill.checking::before, .recheck:disabled svg { animation: none; }
   }
-  .name { display: flex; align-items: center; gap: 9px; font-family: "Courier New", Consolas, monospace; font-size: 15px; }
-  .name svg { width: 16px; height: 11px; flex: none; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
-  .name small { display: block; font-family: Verdana, Geneva, sans-serif; font-size: 10px; color: var(--muted); }
 
-  /* shields-style badges: label segment + value segment, butted together */
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; }
-  .badge { display: inline-flex; font-size: 12px; line-height: 20px; border-radius: 3px; overflow: hidden; white-space: nowrap; text-decoration: none; }
-  .badge > span { padding: 0 6px; }
-  .badge .l { background: var(--label); color: #fff; }
-  .badge .v { background: var(--link-bg); color: var(--link-ink); }
-  a.badge:hover .v { text-decoration: underline; }
-  .badge .up { background: var(--up); color: #fff; }
-  .badge .down { background: var(--down); color: #fff; }
-  .badge .pending { background: var(--pending); color: #fff; }
-  .badge .main { background: var(--main); color: #fff; }
-  .badge .testing { background: var(--testing); color: #333; }
-  .badge .unset { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--rule); }
-  .badge .l.unset { background: var(--label); opacity: .55; }
-  .checking .up, .checking .pending { animation: blink 1s ease-in-out infinite; }
-  @keyframes blink { 50% { opacity: .4; } }
-  @media (prefers-reduced-motion: reduce) { .checking .pending { animation: none; } }
+  .note { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--down-bg); color: var(--down-ink); font-size: 13px; }
+  .host { font-family: var(--mono); font-size: 13px; color: var(--accent); overflow-wrap: anywhere; }
+  .host.unset { color: var(--muted); }
 
-  .build { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-  .note { grid-column: 2 / -1; font-size: 11px; color: var(--muted); margin-top: -4px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 9px; background: var(--btn-bg); color: var(--btn-ink); font-size: 13px; font-weight: 600; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn.unset { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); font-weight: 500; }
+  .btn.unset:hover { text-decoration: none; }
 
-  @media (max-width: 760px) {
-    li { grid-template-columns: 1fr; }
-    .build { justify-content: flex-start; }
-    .note { grid-column: 1; }
-  }
+  .card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; margin-top: auto; }
+  .branch { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--main-bg); color: var(--main-ink); font-family: var(--mono); font-size: 12px; font-weight: 500; }
+  .branch.testing { background: var(--test-bg); color: var(--test-ink); }
+  .branch.unset { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+  .branch svg { width: 13px; height: 13px; }
+  .rg { font-size: 12px; color: var(--muted); }
+
+  footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  footer a { color: var(--accent); }
+  footer .repo { display: inline-flex; align-items: center; gap: 6px; }
+  footer .repo svg { width: 16px; height: 16px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="top">
-    <h1><svg width="12" height="12" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 0h3v3.5H10v3H6.5V10h-3V6.5H0v-3h3.5z" fill="#e30613"/></svg>121 Scan instances</h1>
-    <span class="meta" id="summary" aria-live="polite">checking…</span>
-    <span class="spacer"></span>
-    <span class="meta" id="checked"></span>
-    <button class="recheck" id="refresh" type="button">Check again</button>
+<header>
+  <div class="head">
+    <img src="/static/icon-192.png" alt="121 logo">
+    <div class="title">
+      <h1>121 Scan</h1>
+      <p>Instance status across all deployments</p>
+    </div>
+    <div class="actions">
+      <span class="checked" id="checked" aria-live="polite">Checking…</span>
+      <button class="recheck" id="refresh" type="button">
+        <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+        Check again
+      </button>
+    </div>
   </div>
-  <ul id="list"></ul>
-</div>
+</header>
+
+<main>
+  <section class="summary" aria-label="Summary">
+    <div class="stat"><span class="k">Up</span><span class="v up" id="stat-up">–</span></div>
+    <div class="stat"><span class="k">Down</span><span class="v down" id="stat-down">–</span></div>
+    <div class="stat"><span class="k">How it’s checked</span><span class="txt" id="stat-how"></span></div>
+  </section>
+
+  <div id="groups"></div>
+
+  <footer>
+    <span>If you need support contact <a href="mailto:jharrison@redcross.nl">jharrison@redcross.nl</a></span>
+    <a class="repo" id="repo" target="_blank" rel="noopener noreferrer">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5"/><path d="m16 7 5 5-5 5"/></svg>
+      <span id="repo-name"></span>
+    </a>
+  </footer>
+</main>
 
 <script>
 /* ---------------------------------------------------------------------------
  * Instance list — edit this.
  *
- * name           Shown in the row.
+ * name           Shown on the card.
  * flag           Key into FLAGS below.
  * appName        Azure Web App name (the deploy workflow's app-name).
  * url            Public URL of the 121 Scan instance.
  * url121         The 121 instance it connects to (its URL_121 setting).
  * subscriptionId Azure subscription ID  } both needed for the Azure link
  * resourceGroup  Azure resource group   }
- * branch         The branch this instance is built from.
+ * branch         The branch this instance is built from. "main" goes under
+ *                Production, anything else under Testing.
  *
  * Empty strings show as "not set"; nothing is guessed.
  * ------------------------------------------------------------------------- */
@@ -146,16 +240,29 @@ const TIMEOUT_MS = 8000;
 
 /* ------------------------------------------------------------------------- */
 
-const listEl = document.getElementById("list");
-const summaryEl = document.getElementById("summary");
+const ICONS = {
+  external: '<path d="M7 17 17 7"/><path d="M8 7h9v9"/>',
+  branch:   '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="8" r="2.5"/><path d="M6 8.5v7"/><path d="M18 10.5c0 4-6 3-11.2 6"/>',
+};
+
+const groupsEl = document.getElementById("groups");
 const checkedEl = document.getElementById("checked");
 const refreshBtn = document.getElementById("refresh");
+const upEl = document.getElementById("stat-up");
+const downEl = document.getElementById("stat-down");
+
+document.getElementById("stat-how").innerHTML =
+  "Each instance’s <code>/ping</code> must answer within " + TIMEOUT_MS / 1000 + " s.";
+document.getElementById("repo").href = REPO_URL;
+document.getElementById("repo-name").textContent = REPO_URL.replace(/^https:\/\/github\.com\//, "");
 
 function el(tag, attrs = {}, children = []) {
   const n = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
+    if (v == null) continue;
     if (k === "class") n.className = v;
     else if (k === "text") n.textContent = v;
+    else if (k === "html") n.innerHTML = v;
     else n.setAttribute(k, v);
   }
   for (const c of [].concat(children)) {
@@ -165,20 +272,21 @@ function el(tag, attrs = {}, children = []) {
   return n;
 }
 
-/* badge(label, value, valueClass, href, title) */
-function badge(label, value, cls = "", href = null, title = null) {
-  const parts = [el("span", { class: "l" + (cls === "unset" ? " unset" : ""), text: label })];
-  if (value != null) parts.push(el("span", { class: cls ? cls : "v", text: value }));
-  const attrs = { class: "badge" };
-  if (title) attrs.title = title;
-  if (href) Object.assign(attrs, { href, target: "_blank", rel: "noopener noreferrer" });
-  return el(href ? "a" : "span", attrs, parts);
+function icon(name) {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("class", "i");
+  s.setAttribute("viewBox", "0 0 24 24");
+  s.setAttribute("aria-hidden", "true");
+  s.innerHTML = ICONS[name];
+  return s;
 }
 
 const base = u => u.replace(/\/+$/, "");
+const host = u => u.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+const ext = { target: "_blank", rel: "noopener noreferrer" };
 
 function azureUrl(i) {
-  if (!i.subscriptionId || !i.resourceGroup) return null;
+  if (!i.subscriptionId || !i.resourceGroup || !i.appName) return null;
   return "https://portal.azure.com/#resource/subscriptions/" + encodeURIComponent(i.subscriptionId) +
     "/resourceGroups/" + encodeURIComponent(i.resourceGroup) +
     "/providers/Microsoft.Web/sites/" + encodeURIComponent(i.appName) + "/overview";
@@ -195,67 +303,137 @@ async function fetchWithTimeout(url, opts = {}) {
  * no-cors can't read the reply, but the request only resolves if the server
  * answered, which is all "up" needs. */
 async function check(inst) {
-  if (!inst.url) return { state: "unknown", note: "No URL in the instance list." };
+  if (!inst.url) return { state: "unknown" };
   try {
     await fetchWithTimeout(base(inst.url) + "/ping", { mode: "no-cors" });
     return { state: "up" };
   } catch (_) {
-    return { state: "down", note: "No response within " + TIMEOUT_MS / 1000 + " s." };
+    return { state: "down" };
   }
 }
 
-const STATUS = {
-  checking: ["…", "pending"],
-  up:       ["up", "up"],
-  down:     ["down", "down"],
-  unknown:  ["?", "pending"],
-};
+const STATUS_TEXT = { checking: "Checking", up: "Up", down: "Down", unknown: "No URL" };
 
-function row(inst, r) {
-  const [statusText, statusCls] = STATUS[r.state];
+function linkBtn(label, href, primary = false) {
+  if (!href) return el("span", { class: "btn unset", title: "Not set in the instance list" }, [label + " not set"]);
+  const children = [label];
+  if (primary) children.push(icon("external"));
+  return el("a", { class: "btn" + (primary ? " primary" : ""), href, ...ext }, children);
+}
 
-  const name = el("div", { class: "name" });
-  name.insertAdjacentHTML("beforeend",
-    `<svg viewBox="0 0 16 11" aria-hidden="true">${FLAGS[inst.flag] || ""}</svg>`);
-  name.append(el("div", {}, [inst.name, el("small", { text: inst.appName })]));
+function card(inst, state) {
+  const flag = el("span", {
+    class: "flag",
+    html: `<svg viewBox="0 0 16 11" width="30" height="21" aria-hidden="true" style="display:block;border-radius:3px">${FLAGS[inst.flag] || ""}</svg>`,
+  });
 
-  const az = azureUrl(inst);
-  const links = el("div", { class: "badges" }, [
-    inst.url ? badge("121 Scan", statusText, statusCls, base(inst.url)) : badge("121 Scan", "not set", "unset"),
-    az ? badge("Azure", "App Service", "", az) : badge("Azure", "not set", "unset"),
-    inst.url121 ? badge("121", "Portal", "", base(inst.url121)) : badge("121", "not set", "unset"),
+  const top = el("div", { class: "card-top" }, [
+    flag,
+    el("div", { class: "who" }, [
+      el("h3", { text: inst.name }),
+      el("span", { text: inst.appName || "app name not set" }),
+    ]),
+    el("span", { class: "pill " + state, text: STATUS_TEXT[state] }),
   ]);
 
-  const build = el("div", { class: "build" });
-  if (inst.branch) {
-    const bcls = inst.branch === "main" ? "main" : inst.branch === "testing" ? "testing" : "v";
-    build.append(badge("branch", inst.branch, bcls, REPO_URL + "/tree/" + encodeURIComponent(inst.branch)));
-  } else {
-    build.append(badge("branch", "not set", "unset"));
+  const note = state === "down"
+    ? el("p", { class: "note", text: "No answer from /ping within " + TIMEOUT_MS / 1000 + " s. Open the Azure App Service to check logs." })
+    : null;
+
+  const hostLine = inst.url
+    ? el("a", { class: "host", href: base(inst.url), ...ext, text: host(inst.url) })
+    : el("span", { class: "host unset", text: "URL not set" });
+
+  const btns = el("div", { class: "btns" }, [
+    linkBtn("121 Scan", inst.url ? base(inst.url) : null, true),
+    linkBtn("121 Portal", inst.url121 ? base(inst.url121) : null),
+    linkBtn("Azure", azureUrl(inst)),
+  ]);
+
+  const branch = inst.branch
+    ? el("a", {
+        class: "branch" + (inst.branch === "main" ? "" : " testing"),
+        href: REPO_URL + "/tree/" + encodeURIComponent(inst.branch), ...ext,
+      }, [icon("branch"), inst.branch])
+    : el("span", { class: "branch unset" }, [icon("branch"), "branch not set"]);
+
+  const foot = el("div", { class: "card-foot" }, [
+    branch,
+    inst.resourceGroup ? el("span", { class: "rg", text: inst.resourceGroup }) : null,
+  ]);
+
+  return el("li", { class: "card " + state }, [top, note, hostLine, btns, foot]);
+}
+
+/* Group by branch: main → Production, everything else → Testing. */
+const GROUPS = [
+  { title: "Production", test: i => i.branch === "main", from: "main" },
+  { title: "Testing",    test: i => i.branch !== "main", from: null },
+];
+
+const cardSlots = new Map(); // instance index → <li>
+
+function renderAll(states) {
+  cardSlots.clear();
+  const sections = [];
+  for (const g of GROUPS) {
+    const members = INSTANCES.map((inst, idx) => ({ inst, idx })).filter(({ inst }) => g.test(inst));
+    if (!members.length) continue;
+    const branches = [...new Set(members.map(m => m.inst.branch).filter(Boolean))];
+    const n = members.length;
+    const sub = n + (n === 1 ? " instance" : " instances") +
+      (branches.length ? " · built from " + branches.join(", ") : "");
+    const list = el("ul", { class: "cards" });
+    for (const { inst, idx } of members) {
+      const li = card(inst, states[idx]);
+      cardSlots.set(idx, li);
+      list.append(li);
+    }
+    sections.push(el("section", { class: "group" }, [
+      el("div", { class: "group-head" }, [el("h2", { text: g.title }), el("span", { text: sub })]),
+      list,
+    ]));
   }
+  groupsEl.replaceChildren(...sections);
+}
 
-  const notes = r.note ? [el("div", { class: "note", text: r.note })] : [];
+function renderSummary(states, done) {
+  const total = INSTANCES.length;
+  const up = states.filter(s => s === "up").length;
+  const downNames = INSTANCES.filter((_, i) => states[i] === "down").map(i => i.name);
 
-  return el("li", { class: r.state }, [name, links, build, ...notes]);
+  upEl.replaceChildren(String(done ? up : "–"), " ", el("small", { text: "of " + total }));
+
+  if (!done) {
+    downEl.className = "v none";
+    downEl.replaceChildren("–");
+  } else if (downNames.length) {
+    downEl.className = "v down";
+    downEl.replaceChildren(String(downNames.length), " ", el("small", { text: downNames.join(", ") }));
+  } else {
+    downEl.className = "v none";
+    downEl.replaceChildren("0 ", el("small", { text: "all answering" }));
+  }
 }
 
 async function run() {
   refreshBtn.disabled = true;
-  summaryEl.textContent = "checking…";
-  listEl.replaceChildren(...INSTANCES.map(i => row(i, { state: "checking" })));
+  checkedEl.textContent = "Checking…";
+  const states = INSTANCES.map(() => "checking");
+  renderAll(states);
+  renderSummary(states, false);
 
-  const states = await Promise.all(INSTANCES.map(async (inst, i) => {
+  await Promise.all(INSTANCES.map(async (inst, i) => {
     const r = await check(inst);
-    listEl.replaceChild(row(inst, r), listEl.children[i]);
-    return r.state;
+    states[i] = r.state;
+    const old = cardSlots.get(i);
+    const fresh = card(inst, r.state);
+    old.replaceWith(fresh);
+    cardSlots.set(i, fresh);
   }));
 
-  const n = s => states.filter(x => x === s).length;
-  const parts = [n("up") + "/" + INSTANCES.length + " up"];
-  if (n("down")) parts.push(n("down") + " down");
-  if (n("unknown")) parts.push(n("unknown") + " without URL");
-  summaryEl.textContent = parts.join(", ");
-  checkedEl.textContent = "checked " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  renderSummary(states, true);
+  checkedEl.textContent = "Checked " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   refreshBtn.disabled = false;
 }
 

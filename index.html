@@ -170,6 +170,7 @@
   .commit .meta { font-size: 12px; color: var(--muted); }
   .diff-more { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
   .diff-empty { margin: 0; padding: 16px 0; color: var(--muted); }
+  .diff-hidden { margin: 0; padding: 12px 0 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
   #diff .note { margin: 0; }
 
   footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
@@ -258,6 +259,15 @@ const FLAGS = {
  * not yet in `base`, and the other way round. Uses the public GitHub API
  * (no token, 60 requests per hour per visitor; each check uses 1–2). */
 const COMPARE = { base: "main", head: "testing" };
+
+/* Routine commits left out of the comparison, because they don't change
+ * what the app does: merge commits, and the workflow-file commits Azure's
+ * Deployment Center makes for each environment. Add a pattern to hide more.
+ * "Compare on GitHub" still shows everything. */
+const HIDE_MERGES = true;
+const HIDE_MESSAGES = [
+  /^Add or update the Azure App Service build and deployment workflow config/i,
+];
 
 const TIMEOUT_MS = 8000;
 
@@ -466,6 +476,20 @@ async function compareBranches(base, head) {
   throw new Error("GitHub answered with status " + r.status + ". Check again in a moment.");
 }
 
+/* A merge commit has more than one parent; the commits it brings in are
+ * listed on their own, so the merge itself adds nothing to read. */
+const isRoutine = c =>
+  (HIDE_MERGES && Array.isArray(c.parents) && c.parents.length > 1) ||
+  HIDE_MESSAGES.some(re => re.test(c.commit.message || ""));
+
+/* One side of the comparison after leaving out routine commits. GitHub
+ * returns at most 250 commits; any beyond that are counted as kept. */
+function side(commits, total) {
+  const kept = commits.filter(c => !isRoutine(c));
+  const unseen = Math.max(0, total - commits.length);
+  return { kept, unseen, hidden: commits.length - kept.length, count: kept.length + unseen };
+}
+
 function commitItem(c) {
   const msg = (c.commit.message || "").split("\n")[0];
   const who = (c.author && c.author.login) || (c.commit.author && c.commit.author.name) || "unknown";
@@ -480,13 +504,13 @@ function commitItem(c) {
   ]);
 }
 
-function commitBlock(title, commits, total) {
-  const shown = commits.slice().reverse(); // newest first
+function commitBlock(title, s) {
+  const shown = s.kept.slice().reverse(); // newest first
   return el("div", { class: "diff-block" }, [
-    el("h3", {}, [title + " ", el("span", { text: "(" + total + ")" })]),
+    el("h3", {}, [title + " ", el("span", { text: "(" + s.count + ")" })]),
     el("ul", { class: "commits" }, shown.map(commitItem)),
-    total > commits.length
-      ? el("p", { class: "diff-more", text: "Showing " + commits.length + " of " + total + ". Open the comparison on GitHub for the rest." })
+    s.unseen
+      ? el("p", { class: "diff-more", text: "Showing " + s.kept.length + " of " + s.count + ". Open the comparison on GitHub for the rest." })
       : null,
   ]);
 }
@@ -503,17 +527,25 @@ function renderDiff(s) {
     body = el("p", { class: "note", text: s.error });
   } else {
     const a = s.result;
+    const ahead = side(a.commits, a.ahead_by);
+    const behind = side(s.behind, a.behind_by);
+
     const parts = [];
-    if (a.ahead_by) parts.push(base + " is " + plural(a.ahead_by, "commit") + " behind " + head);
-    if (a.behind_by) parts.push(head + " is " + plural(a.behind_by, "commit") + " behind " + base);
-    headBits.push(el("span", { text: parts.length ? parts.join("; ") : base + " and " + head + " are identical" }));
+    if (ahead.count) parts.push(base + " is " + plural(ahead.count, "commit") + " behind " + head);
+    if (behind.count) parts.push(head + " is " + plural(behind.count, "commit") + " behind " + base);
+    headBits.push(el("span", { text: parts.length ? parts.join("; ") : base + " and " + head + " have the same changes" }));
     headBits.push(el("a", { class: "diff-link", href: a.html_url, ...ext }, ["Compare on GitHub", icon("external")]));
 
     const blocks = [];
-    if (a.ahead_by) blocks.push(commitBlock("In " + head + ", not yet in " + base, a.commits, a.ahead_by));
-    if (a.behind_by) blocks.push(commitBlock("In " + base + ", not in " + head, s.behind, a.behind_by));
-    body = el("div", { class: "diff-panel" },
-      blocks.length ? blocks : [el("p", { class: "diff-empty", text: "Nothing to merge either way." })]);
+    if (ahead.count) blocks.push(commitBlock("In " + head + ", not yet in " + base, ahead));
+    if (behind.count) blocks.push(commitBlock("In " + base + ", not in " + head, behind));
+    if (!blocks.length) blocks.push(el("p", { class: "diff-empty", text: "Nothing to merge either way." }));
+
+    const hidden = ahead.hidden + behind.hidden;
+    if (hidden) blocks.push(el("p", { class: "diff-hidden",
+      text: plural(hidden, "routine commit") + " not listed: merges and Azure deployment config. Compare on GitHub shows everything." }));
+
+    body = el("div", { class: "diff-panel" }, blocks);
   }
 
   diffEl.replaceChildren(el("div", { class: "group-head" }, headBits), body);
